@@ -5,3 +5,4 @@ __pycache__/
 node_modules/
 *.tgz
 pipery.jsonl
+test-project-with-build/dist/

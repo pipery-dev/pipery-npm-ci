@@ -1,0 +1,6 @@
+{
+  "name": "hello-pipery-lint-errors",
+  "version": "0.1.0",
+  "scripts": { "test": "echo ok" },
+  "license": "MIT"
+}

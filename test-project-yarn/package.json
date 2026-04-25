@@ -1,0 +1,10 @@
+{
+  "name": "hello-pipery-yarn",
+  "version": "0.1.0",
+  "description": "Test fixture using Yarn",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test test.js"
+  },
+  "license": "MIT"
+}
