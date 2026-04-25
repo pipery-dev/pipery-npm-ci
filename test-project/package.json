@@ -1,0 +1,10 @@
+{
+  "name": "hello-pipery",
+  "version": "0.1.0",
+  "description": "Test fixture for pipery-npm-ci",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test test.js"
+  },
+  "license": "MIT"
+}
