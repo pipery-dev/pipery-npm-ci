@@ -1,0 +1,11 @@
+{
+  "name": "hello-pipery-build",
+  "version": "0.1.0",
+  "description": "Test fixture with a build step",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node --test test.js"
+  },
+  "license": "MIT"
+}

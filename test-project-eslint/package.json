@@ -1,0 +1,11 @@
+{
+  "name": "hello-pipery-eslint",
+  "version": "0.1.0",
+  "description": "Test fixture with ESLint",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test test.js",
+    "lint": "eslint ."
+  },
+  "license": "MIT"
+}
