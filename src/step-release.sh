@@ -16,7 +16,7 @@ if [ -z "${INPUT_NPM_TOKEN:-}" ]; then
 fi
 
 echo "==> Release: publishing to npm registry"
-echo "//registry.npmjs.org/:_authToken=${INPUT_NPM_TOKEN}" > ~/.npmrc
+echo "//registry.npmjs.org/:_authToken=${INPUT_NPM_TOKEN}" >> ~/.npmrc
 cd "${PROJECT}"
 if _psh_usable; then
   psh -log-file "${LOG}" -fail-on-error -c "npm publish"

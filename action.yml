@@ -80,12 +80,23 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node_version }}
+
     - name: Setup psh
       shell: bash
       run: ${{ github.action_path }}/src/setup-psh.sh
       env:
         INPUT_PROJECT_PATH: ${{ inputs.project_path }}
         INPUT_LOG_FILE: ${{ inputs.log_file }}
+
+    - name: Load config
+      shell: bash
+      run: ${{ github.action_path }}/src/read-config.sh
+      env:
+        INPUT_CONFIG_FILE: ${{ inputs.config_file }}
 
     - name: Install pipery-tooling
       shell: bash
