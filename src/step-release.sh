@@ -3,6 +3,7 @@ set -euo pipefail
 
 LOG="${INPUT_LOG_FILE:-pipery.jsonl}"
 PROJECT="${INPUT_PROJECT_PATH:-.}"
+SHORT_SHA="${GITHUB_SHA:0:7}"
 
 # Check if psh is usable (installed and executable on this platform)
 _psh_usable() {
@@ -23,4 +24,12 @@ if _psh_usable; then
 else
   npm publish
   printf '{"event":"release","status":"success","tool":"npm-publish"}\n' >> "${LOG}"
+fi
+
+# Add sha dist-tag so the exact published build is pinnable by commit
+PKG_NAME=$(node -p "require('./package.json').name" 2>/dev/null || true)
+PKG_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || true)
+if [ -n "$PKG_NAME" ] && [ -n "$PKG_VERSION" ] && [ -n "$SHORT_SHA" ]; then
+  npm dist-tag add "${PKG_NAME}@${PKG_VERSION}" "sha-${SHORT_SHA}" 2>/dev/null || true
+  echo "==> Added dist-tag sha-${SHORT_SHA} -> ${PKG_NAME}@${PKG_VERSION}"
 fi

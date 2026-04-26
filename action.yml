@@ -33,6 +33,10 @@ inputs:
     description: 'Skip build step.'
     required: false
     default: 'false'
+  tests_path:
+    description: 'Path or glob passed to the test runner as an argument.'
+    required: false
+    default: ''
   skip_test:
     description: 'Skip test step.'
     required: false
@@ -142,6 +146,7 @@ runs:
       env:
         INPUT_PROJECT_PATH: ${{ inputs.project_path }}
         INPUT_PACKAGE_MANAGER: ${{ inputs.package_manager }}
+        INPUT_TESTS_PATH: ${{ inputs.tests_path }}
         INPUT_LOG_FILE: ${{ inputs.log_file }}
 
     - name: Version
@@ -171,6 +176,7 @@ runs:
         INPUT_NPM_TOKEN: ${{ inputs.npm_token }}
         INPUT_REGISTRY: ${{ inputs.registry }}
         INPUT_LOG_FILE: ${{ inputs.log_file }}
+        GITHUB_SHA: ${{ github.sha }}
 
     - name: Reintegrate
       if: ${{ inputs.skip_reintegration != 'true' }}
