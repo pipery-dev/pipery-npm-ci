@@ -1,4 +1,4 @@
-# <img src="https://raw.githubusercontent.com/feathericons/feather/master/icons/package.svg" width="28" align="center" /> Pipery npm CI
+# <img src="https://raw.githubusercontent.com/pipery-dev/pipery-npm-ci/main/assets/icon.png" width="28" align="center" /> Pipery npm CI
 
 Reusable GitHub Action for a complete npm/Node.js CI pipeline with structured logging via [Pipery](https://pipery.dev).
 
@@ -63,7 +63,7 @@ jobs:
 
 ## About Pipery
 
-<img src="https://raw.githubusercontent.com/feathericons/feather/master/icons/zap.svg" width="18" align="center" /> [**Pipery**](https://pipery.dev) is an open-source CI/CD observability platform. Every step script runs under **psh** (Pipery Shell), which intercepts all commands and emits structured JSONL events — giving you full visibility into your pipeline without any manual instrumentation.
+<img src="https://avatars.githubusercontent.com/u/270923927?s=32" width="22" align="center" /> [**Pipery**](https://pipery.dev) is an open-source CI/CD observability platform. Every step script runs under **psh** (Pipery Shell), which intercepts all commands and emits structured JSONL events — giving you full visibility into your pipeline without any manual instrumentation.
 
 - Browse logs in the [Pipery Dashboard](https://github.com/pipery-dev/pipery-dashboard)
 - Find all Pipery actions on [GitHub Marketplace](https://github.com/marketplace?q=pipery&type=actions)
