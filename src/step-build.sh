@@ -11,7 +11,7 @@ else
 fi
 
 if [ -f "${PROJECT}/package.json" ] && command -v node >/dev/null 2>&1; then
-  HAS_BUILD=$(node -e "const p=require('${PROJECT}/package.json'); process.exit(p.scripts && p.scripts.build ? 0 : 1);" 2>/dev/null && echo "yes" || echo "no")
+  HAS_BUILD=$(node -e "const path=require('path');const p=require(path.resolve(process.cwd(),'${PROJECT}/package.json')); process.exit(p.scripts && p.scripts.build ? 0 : 1);" 2>/dev/null && echo "yes" || echo "no")
 else
   HAS_BUILD="no"
 fi

@@ -14,5 +14,5 @@ fi
 echo "==> Test: running '${PM} test' in ${PROJECT}"
 cd "${PROJECT}"
 
-${PM} test ${TESTS_PATH:+-- $TESTS_PATH}
+${PM} test ${TESTS_PATH:+-- "$TESTS_PATH"}
 printf '{"event":"test","status":"success","tool":"%s"}\n' "${PM}" >> "${LOG}"
