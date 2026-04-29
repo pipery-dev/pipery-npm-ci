@@ -21,6 +21,7 @@ printf '{"event":"release","status":"success","tool":"npm-publish"}\n' >> "${LOG
 PKG_NAME=$(node -p "require('./package.json').name" 2>/dev/null || true)
 PKG_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || true)
 if [ -n "$PKG_NAME" ] && [ -n "$PKG_VERSION" ] && [ -n "$SHORT_SHA" ]; then
-  npm dist-tag add "${PKG_NAME}@${PKG_VERSION}" "sha-${SHORT_SHA}" 2>/dev/null \
-    && echo "==> Added dist-tag sha-${SHORT_SHA} -> ${PKG_NAME}@${PKG_VERSION}" || true
+  if npm dist-tag add "${PKG_NAME}@${PKG_VERSION}" "sha-${SHORT_SHA}" 2>/dev/null; then
+    echo "==> Added dist-tag sha-${SHORT_SHA} -> ${PKG_NAME}@${PKG_VERSION}"
+  fi
 fi
