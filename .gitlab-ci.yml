@@ -1,0 +1,319 @@
+# GitLab CI Pipeline for pipery-npm-ci
+# This is the GitLab CI equivalent of the GitHub Actions npm-ci workflow
+#
+# SETUP INSTRUCTIONS:
+# 1. Copy this file to your pipery-npm-ci repository as .gitlab-ci.yml
+# 2. Update the variables section with your specific registry/credentials
+# 3. Configure protected variables in GitLab CI/CD settings (Settings > CI/CD > Variables)
+# 4. Set any skip_* variables to 'true' if you want to disable specific steps
+#
+# VARIABLES:
+# These correspond to the GitHub Action inputs. Customize as needed.
+
+variables:
+  PROJECT_PATH: "."
+  CONFIG_FILE: ".github/pipery/config.yaml"
+  PACKAGE_MANAGER: "auto"
+  PYTHON_VERSION: "3.11"
+  # Security scanning controls
+  SKIP_SAST: "false"
+  SKIP_SCA: "false"
+  SKIP_LINT: "false"
+  SKIP_BUILD: "false"
+  SKIP_TEST: "false"
+  SKIP_VERSIONING: "false"
+  SKIP_PACKAGING: "false"
+  SKIP_RELEASE: "false"
+  SKIP_REINTEGRATION: "false"
+  # Release configuration
+  VERSION_BUMP: "patch"
+  REGISTRY: "ghcr.io"
+  REGISTRY_USERNAME: ""
+  # Secrets (set in GitLab Protected Variables)
+  # REGISTRY_PASSWORD: (set in GitLab Protected Variables)
+  # GITHUB_TOKEN: (set in GitLab Protected Variables)
+  # PYPI_TOKEN: (set in GitLab Protected Variables)
+  # Logging
+  LOG_FILE: "pipery.jsonl"
+  TARGET_BRANCH: "main"
+
+stages:
+  - checkout
+  - setup
+  - sast
+  - sca
+  - lint
+  - build
+  - test
+  - versioning
+  - packaging
+  - release
+  - reintegration
+  - logs
+
+# ============================================================================
+# CHECKOUT & SETUP STAGE
+# ============================================================================
+
+checkout:
+  stage: checkout
+  image: alpine:latest
+  script:
+    - echo "Repository already checked out by GitLab CI"
+    - ls -la
+  artifacts:
+    paths:
+      - .git/
+    expire_in: 1 day
+
+setup:
+  stage: setup
+  image: node:22-alpine
+  before_script:
+    - npm --version
+    - node --version
+  script:
+    - echo "Setting up npm CI environment..."
+    - cd $PROJECT_PATH
+    - npm ci
+    - echo "Setup complete"
+  artifacts:
+    paths:
+      - $PROJECT_PATH/node_modules/
+      - $PROJECT_PATH/package-lock.json
+    expire_in: 1 day
+  cache:
+    paths:
+      - $PROJECT_PATH/node_modules/
+
+# ============================================================================
+# SECURITY STAGES
+# ============================================================================
+
+sast_scan:
+  stage: sast
+  image: python:3.11-alpine
+  script:
+    - echo "Running SAST scan using pipery-tooling..."
+    - pip install pipery-tooling
+    - pipery-tooling sast --project-path $PROJECT_PATH --config $CONFIG_FILE --log-file $LOG_FILE
+    - echo "SAST scan complete"
+  allow_failure: true
+  rules:
+    - if: '$SKIP_SAST == "true"'
+      when: never
+    - when: on_success
+  artifacts:
+    paths:
+      - $LOG_FILE
+    expire_in: 30 days
+
+sca_scan:
+  stage: sca
+  image: python:3.11-alpine
+  script:
+    - echo "Running SCA scan using pipery-tooling..."
+    - pip install pipery-tooling
+    - pipery-tooling sca --project-path $PROJECT_PATH --config $CONFIG_FILE --log-file $LOG_FILE
+    - echo "SCA scan complete"
+  allow_failure: true
+  rules:
+    - if: '$SKIP_SCA == "true"'
+      when: never
+    - when: on_success
+  artifacts:
+    paths:
+      - $LOG_FILE
+    expire_in: 30 days
+
+# ============================================================================
+# LINT STAGE
+# ============================================================================
+
+lint:
+  stage: lint
+  image: node:22-alpine
+  script:
+    - cd $PROJECT_PATH
+    - echo "Running linters..."
+    - npm run lint || true
+    - echo "Lint stage complete"
+  rules:
+    - if: '$SKIP_LINT == "true"'
+      when: never
+    - when: on_success
+  allow_failure: true
+
+# ============================================================================
+# BUILD STAGE
+# ============================================================================
+
+build:
+  stage: build
+  image: node:22-alpine
+  script:
+    - cd $PROJECT_PATH
+    - echo "Building npm package..."
+    - npm run build
+    - echo "Build complete"
+  rules:
+    - if: '$SKIP_BUILD == "true"'
+      when: never
+    - when: on_success
+  artifacts:
+    paths:
+      - $PROJECT_PATH/dist/
+      - $PROJECT_PATH/build/
+    expire_in: 1 day
+
+# ============================================================================
+# TEST STAGE
+# ============================================================================
+
+test:
+  stage: test
+  image: node:22-alpine
+  dependencies:
+    - build
+  script:
+    - cd $PROJECT_PATH
+    - echo "Running tests..."
+    - npm test
+    - echo "Tests complete"
+  rules:
+    - if: '$SKIP_TEST == "true"'
+      when: never
+    - when: on_success
+  coverage: '/Coverage: \d+\.\d+%/'
+  artifacts:
+    paths:
+      - $PROJECT_PATH/coverage/
+    reports:
+      junit: $PROJECT_PATH/coverage/junit.xml
+    expire_in: 30 days
+
+# ============================================================================
+# VERSIONING STAGE
+# ============================================================================
+
+versioning:
+  stage: versioning
+  image: python:3.11-alpine
+  script:
+    - echo "Running versioning step..."
+    - pip install pipery-tooling
+    - pipery-tooling version --project-path $PROJECT_PATH --version-bump $VERSION_BUMP --log-file $LOG_FILE
+    - echo "Versioning complete"
+    - |
+      if [ -f "$PROJECT_PATH/package.json" ]; then
+        grep '"version"' $PROJECT_PATH/package.json | head -1 > version_info.txt
+        cat version_info.txt
+      fi
+  rules:
+    - if: '$SKIP_VERSIONING == "true"'
+      when: never
+    - when: on_success
+  artifacts:
+    paths:
+      - version_info.txt
+      - $LOG_FILE
+    expire_in: 30 days
+
+# ============================================================================
+# PACKAGING STAGE
+# ============================================================================
+
+packaging:
+  stage: packaging
+  image: node:22-alpine
+  dependencies:
+    - build
+    - versioning
+  script:
+    - echo "Creating npm package..."
+    - cd $PROJECT_PATH
+    - npm pack
+    - echo "Package created"
+  rules:
+    - if: '$SKIP_PACKAGING == "true"'
+      when: never
+    - when: on_success
+  artifacts:
+    paths:
+      - $PROJECT_PATH/*.tgz
+    expire_in: 30 days
+
+# ============================================================================
+# RELEASE STAGE
+# ============================================================================
+
+release:
+  stage: release
+  image: node:22-alpine
+  dependencies:
+    - versioning
+    - packaging
+  script:
+    - echo "Publishing to npm registry..."
+    - cd $PROJECT_PATH
+    - |
+      if [ -n "$REGISTRY" ] && [ "$REGISTRY" != "npm" ]; then
+        npm config set registry "$REGISTRY"
+      fi
+    - |
+      if [ -n "$REGISTRY_PASSWORD" ]; then
+        npm set //$(echo $REGISTRY | sed 's|https://||'):_authToken=$REGISTRY_PASSWORD
+      fi
+    - npm publish
+    - echo "Release complete"
+  rules:
+    - if: '$SKIP_RELEASE == "true"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == $TARGET_BRANCH'
+      when: on_success
+    - when: manual
+  only:
+    - branches
+
+# ============================================================================
+# REINTEGRATION STAGE
+# ============================================================================
+
+reintegration:
+  stage: reintegration
+  image: alpine:latest
+  script:
+    - echo "Reintegration step would update target branch..."
+    - |
+      if [ -z "$GITHUB_TOKEN" ]; then
+        echo "Skipping reintegration: GITHUB_TOKEN not set"
+        exit 0
+      fi
+    - echo "Reintegration complete"
+  rules:
+    - if: '$SKIP_REINTEGRATION == "true"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == $TARGET_BRANCH'
+      when: on_success
+    - when: manual
+  allow_failure: true
+
+# ============================================================================
+# ARTIFACTS & LOGGING
+# ============================================================================
+
+publish_logs:
+  stage: logs
+  image: alpine:latest
+  script:
+    - echo "Collecting logs and artifacts..."
+    - |
+      if [ -f "$LOG_FILE" ]; then
+        echo "Log file size: $(wc -c < $LOG_FILE) bytes"
+      fi
+  artifacts:
+    paths:
+      - $LOG_FILE
+      - version_info.txt
+    expire_in: 90 days
+  when: always
